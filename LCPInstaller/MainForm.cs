@@ -33,6 +33,19 @@ namespace LCPInstaller
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            String replace = File.ReadAllText("C:\\Windows\\System32\\drivers\\etc\\hosts");
+            if (replace.Contains("51.195.220.243 assetserver.lunarclientprod.com"))
+            {
+                replace = replace.Replace("51.195.220.243 assetserver.lunarclientprod.com", "");
+            }
+
+            if (replace.Contains("194.163.177.249 assetserver.lunarclientprod.com"))
+            {
+                replace = replace.Replace("194.163.177.249 assetserver.lunarclientprod.com", "");
+            }
+            
+            File.WriteAllText("C:\\Windows\\System32\\drivers\\etc\\hosts", replace);
+
             dateTimer.Start(); // Start the timer for the live clock display on the GUI
 
 
@@ -61,14 +74,20 @@ namespace LCPInstaller
             File.SetAccessControl("C:\\Windows\\System32\\drivers\\etc\\hosts", fSecurity);
 
             String replace = File.ReadAllText("C:\\Windows\\System32\\drivers\\etc\\hosts");
-            if (replace.Contains("51.195.220.243 assetserver.lunarclientprod.com"))
+            if (replace.Contains("198.251.84.251 assetserver.lunarclientprod.com"))
             {
-                replace = replace.Replace("51.195.220.243 assetserver.lunarclientprod.com", "");
+                replace = replace.Replace("198.251.84.251 assetserver.lunarclientprod.com", "");
+            }
+            if (replace.Contains("198.251.84.251 api.lunarclientprod.com"))
+            {
+                replace = replace.Replace("198.251.84.251 api.lunarclientprod.com", "");
             }
             File.WriteAllText("C:\\Windows\\System32\\drivers\\etc\\hosts", replace);
 
             fSecurity.RemoveAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, AccessControlType.Allow));
             File.SetAccessControl("C:\\Windows\\System32\\drivers\\etc\\hosts", fSecurity);
+
+            Process.Start("cmd.exe", "/c setx NODE_TLS_REJECT_UNAUTHORIZED 1");
 
             removeLCProxyBtn.Text = "Completed";
         }
@@ -115,6 +134,7 @@ namespace LCPInstaller
                     foreach (FileSystemInfo foundFile in filesAndDirs)
                     {
                         string fullName = foundFile.FullName;
+                        Process.Start(javaHome + "\\bin\\keytool.exe", "-keystore \"" + fullName + "\\lib\\security\\cacerts\" -delete -alias lcproxy -storepass changeit -noprompt").WaitForExit();
                         Process.Start(javaHome + "\\bin\\keytool.exe", "-keystore \"" + fullName + "\\lib\\security\\cacerts\" -trustcacerts -importcert -alias lcproxy -storepass changeit -file \"" + Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LCPcert.cer") + "\" -noprompt");
                     }
 
@@ -130,9 +150,16 @@ namespace LCPInstaller
                 File.SetAccessControl("C:\\Windows\\System32\\drivers\\etc\\hosts", fSecurity);
 
                 String hostsFile = File.ReadAllText("C:\\Windows\\System32\\drivers\\etc\\hosts");
-                if(!hostsFile.Contains("194.163.177.249 assetserver.lunarclientprod.com"))
+
+                if(hostsFile.Contains("198.251.84.251 assetserver.lunarclientprod.com"))
                 {
-                    hostsFile += "\n194.163.177.249 assetserver.lunarclientprod.com";
+                    hostsFile.Replace("198.251.84.251 assetserver.lunarclientprod.com", "");
+                    hostsFile.Replace("198.251.84.251 api.lunarclientprod.com", "");
+                }
+
+                if(!hostsFile.Contains("198.251.84.251 assetserver.lunarclientprod.com\n198.251.84.251 api.lunarclientprod.com"))
+                {
+                    hostsFile += "\n198.251.84.251 assetserver.lunarclientprod.com\n198.251.84.251 api.lunarclientprod.com\n";
                 }
                 File.WriteAllText("C:\\Windows\\System32\\drivers\\etc\\hosts", hostsFile);
 
@@ -140,6 +167,8 @@ namespace LCPInstaller
                 File.SetAccessControl("C:\\Windows\\System32\\drivers\\etc\\hosts", fSecurity);
 
                 installLCProxyBtn.Text = "Completed";
+
+                Process.Start("cmd.exe", "/c setx NODE_TLS_REJECT_UNAUTHORIZED 0");
             } else
             {
                 new Thread(noJava).Start();
